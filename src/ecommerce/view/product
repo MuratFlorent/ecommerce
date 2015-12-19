@@ -1,0 +1,58 @@
+<?php
+    use ecommerce\model\Comment;
+    use ecommerce\model\Product;
+
+    /* @var $oProduct Product */
+?>
+<h1><?= $oProduct->getName(); ?></h1>
+
+<img src="/<?= $oProduct->getImage(); ?>" alt=""
+     class="img-responsive pull-left img-rounded"/>
+
+<div class="content clearfix">
+    <p><?= $oProduct->getDescription(); ?></p>
+
+    <p class="price">
+        Prix: <strong>
+            <?= $oProduct->getPrice(); ?></strong>
+    </p>
+
+    <form method="post" action="" class="form-inline">
+        <input type="hidden" name="product" value="<?= $oProduct->getId(); ?>"/>
+        <input type="number" name="quantity" class="form-control" value="1"/>
+        <button class="btn btn-primary" type="submit" name="addToCart"><span
+                class="glyphicon glyphicon-shopping-cart"></span>&nbsp;Ajouter au panier
+        </button>
+    </form>
+
+</div>
+<h3>Commentaires clients :</h3>
+<ul class="comments list-unstyled">
+    <?php foreach ($aComments as $oComment): ?>
+        <?php /* @var $oComment Comment; */ ?>
+        <li><strong><?= $oComment->getUser()->getFirstName(); ?></strong> - <?= $oComment->getDate(); ?>
+            : <?= $oComment->getComment(); ?></li>
+    <?php endforeach; ?>
+</ul>
+
+
+<h3>Vous aimerez peut être :</h3>
+<ul class="list-unstyled">
+    <?php foreach ($aSimilarProducts as $oProduct): ?>
+        <li class="row"><a href="<?= $oProduct->getUrl(); ?>" class="col-xs-2"><img
+                    src="/<?= $oProduct->getImage(); ?>" alt=""
+                    class="img-responsive img-rounded"/></a>
+
+            <h3 class="col-xs-2"><a href="<?= $oProduct->getUrl(); ?>"><?= $oProduct->getName(); ?></a></h3>
+
+            <p class="col-xs-6"><?= $oProduct->getShortDescription(); ?></p>
+
+            <div class="col-xs-2">
+                <span class="price"><?=$oProduct->getPrice();?></span>
+                <button class="btn btn-primary"><span
+                        class="glyphicon glyphicon-shopping-cart"></span>&nbsp;Ajouter au panier
+                </button>
+            </div>
+        </li>
+    <?php endforeach; ?>
+</ul>
