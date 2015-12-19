@@ -1,0 +1,65 @@
+<?php
+
+    namespace ecommerce\model\dao;
+
+    use ecommerce\model\Category;
+
+    /**
+     * Class CategoryManager.
+     * Manage all category operations.
+     *
+     * @package ecommerce\model\dao
+     */
+    class CategoryManager
+    {
+        /**
+         * Convert a category array into a category object.
+         *
+         * @param array $aCategory category.
+         *
+         * @return Category converted object.
+         */
+        private static function convertToObject($aCategory)
+        {
+            $oCategory = new Category();
+            $oCategory->setId(intval($aCategory['id']));
+            $oCategory->setName($aCategory['name']);
+            $oCategory->setDescription($aCategory['description']);
+            $oCategory->setImage($aCategory['image']);
+            return $oCategory;
+        }
+
+        /**
+         * Get a category from its id.
+         *
+         * @param int $iId category id.
+         *
+         * @return Category matched category, null if not found
+         */
+        public static function get($iId)
+        {
+            $sQuery = 'select * from category where id = ' . $iId . ' limit 1';
+            $aCategoryRow = DBOperation::getOne($sQuery);
+            $oCategory = null;
+            if (false !== $aCategoryRow) {
+                $oCategory = self::convertToObject($aCategoryRow);
+            }
+            return $oCategory;
+        }
+
+
+        /**
+         * Get all categories.
+         *
+         * @return array(Category) all categories.
+         */
+        public static function getAll()
+        {
+            $sQuery = 'select * from category';
+            $aCategories = array();
+            foreach (DBOperation::getAll($sQuery) as $aCategory) {
+                $aCategories[] = self::convertToObject($aCategory);
+            }
+            return $aCategories;
+        }
+    }
