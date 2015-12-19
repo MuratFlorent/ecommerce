@@ -1,0 +1,93 @@
+<?php
+
+    namespace ecommerce\model;
+
+
+    class Order
+    {
+
+        private $iId;
+        private $dDate;
+        private $fTotal;
+        private $oUser;
+        private $aProducts = array();
+
+
+        /**
+         * @param mixed $dDate
+         */
+        public function setDate($dDate)
+        {
+            $this->dDate = $dDate;
+        }
+
+        /**
+         * @return mixed
+         */
+        public function getDate()
+        {
+            return $this->dDate;
+        }
+
+        /**
+         * @param mixed $fTotal
+         */
+        public function setTotal($fTotal)
+        {
+            $this->fTotal = $fTotal;
+        }
+
+        /**
+         * @return mixed
+         */
+        public function getTotal()
+        {
+            return $this->fTotal;
+        }
+
+        /**
+         * @param mixed $iId
+         */
+        public function setId($iId)
+        {
+            $this->iId = $iId;
+        }
+
+        /**
+         * @return mixed
+         */
+        public function getId()
+        {
+            return $this->iId;
+        }
+
+        /**
+         * @param mixed $oUser
+         */
+        public function setUser($oUser)
+        {
+            $this->oUser = $oUser;
+        }
+
+        /**
+         * @return mixed
+         */
+        public function getUser()
+        {
+            return $this->oUser;
+        }
+
+        /**
+         * @return array
+         */
+        public function getProducts()
+        {
+            return $this->aProducts;
+        }
+
+        public function addProduct(CartProduct $oProduct)
+        {
+            $this->aProducts[] = $oProduct;
+        }
+
+    }
