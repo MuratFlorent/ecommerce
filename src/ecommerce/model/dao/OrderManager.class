@@ -1,0 +1,90 @@
+<?php
+
+    namespace ecommerce\model\dao;
+
+    use ecommerce\model\CartProduct;
+    use ecommerce\model\Order;
+    use ecommerce\model\User;
+
+
+    class OrderManager
+    {
+
+        private static function convertToObject($aOrder)
+        {
+            $oOrder = new Order();
+            $oOrder->setId($aOrder['id']);
+            $oOrder->setDate($aOrder['date']);
+            $oOrder->setTotal($aOrder['total']);
+            return $oOrder;
+        }
+
+        public static function getCurrent(User $oUser)
+        {
+            if (null === $oUser) {
+                return null;
+            }
+            $sQuery = "select * from orders where user_email = '{$oUser->getEmail()}' order by date desc limit 1";
+            $aOrder = DBOperation::getOne($sQuery);
+            if (false === $aOrder) {
+                return null;
+            }
+
+            $oOrder = self::convertToObject($aOrder);
+            $oOrder->setUser($oUser);
+
+            // get products
+            $sQuery = "select * from order_product where order_id = " . $oOrder->getId();
+
+            $aOrderProducts = DBOperation::getAll($sQuery);
+            if (count($aOrderProducts) > 0) {
+                foreach ($aOrderProducts as $aOrderProduct) {
+                    $oProduct = ProductManager::get($aOrderProduct['product_id']);
+                    $oProduct = CartProduct::create($oProduct);
+                    $oProduct->setQuantity($aOrderProduct['quantity']);
+
+                    $oOrder->addProduct($oProduct);
+                }
+            }
+
+            return $oOrder;
+        }
+
+        public static function getAll(User $oUser)
+        {
+            if (null === $oUser) {
+                return null;
+            }
+            $sQuery = "select * from orders where user_email = '{$oUser->getEmail()}' order by date desc";
+            $aOrders = DBOperation::getAll($sQuery);
+            if (false === $aOrders) {
+                return null;
+            }
+
+            $aAll = array();
+            foreach ($aOrders as $aOrder) {
+                $oOrder = self::convertToObject($aOrder);
+                $oOrder->setUser($oUser);
+
+                // get products
+                $sQuery = "select * from order_product where order_id = " . $oOrder->getId();
+
+                $aOrderProducts = DBOperation::getAll($sQuery);
+                if (count($aOrderProducts) > 0) {
+                    foreach ($aOrderProducts as $aOrderProduct) {
+                        $oProduct = ProductManager::get($aOrderProduct['product_id']);
+                        $oProduct = CartProduct::create($oProduct);
+                        $oProduct->setQuantity($aOrderProduct['quantity']);
+
+                        $oOrder->addProduct($oProduct);
+                    }
+                }
+                $aAll[] = $oOrder;
+            }
+
+
+            return $aAll;
+        }
+
+
+    }
