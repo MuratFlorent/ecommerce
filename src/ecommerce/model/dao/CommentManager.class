@@ -1,0 +1,59 @@
+<?php
+
+    namespace ecommerce\model\dao;
+
+    use ecommerce\model\Comment;
+    use ecommerce\model\Product;
+    use ecommerce\model\User;
+
+    /**
+     * Class CommentManager.
+     * Manage all Comment operations.
+     *
+     * @package ecommerce\model\dao
+     */
+    class CommentManager
+    {
+        /**
+         * Convert a Comment array into a Comment object.
+         *
+         * @param array $aComment Comment.
+         *
+         * @return Comment converted object.
+         */
+        private static function convertToObject($aComment)
+        {
+            $oComment = new Comment();
+            $oComment->setComment($aComment['comment']);
+            $oComment->setMark(intval($aComment['mark']));
+            $oComment->setDate($aComment['date']);
+
+            $oUser = new User();
+            $oUser->setEmail($aComment['user_email']);
+            $oComment->setUser(UserManager::get($oUser));
+            $oComment->setProduct(ProductManager::get($aComment['product_id']));
+            return $oComment;
+        }
+
+        public static function getAllFromProduct(Product $oProduct, $iLimit = 10)
+        {
+            $sQuery = 'select * from comment ';
+            $sQuery .= ' where product_id = ' . $oProduct->getId();
+            $sQuery .= ' limit ' . $iLimit;
+            $aComments = array();
+            foreach (DBOperation::getAll($sQuery) as $aComment) {
+                $aComments[] = self::convertToObject($aComment);
+            }
+
+            return $aComments;
+        }
+
+        public static function create(Comment $oComment)
+        {
+            $sQuery = 'insert into comment(product_id,user_email,comment,mark,date) values(';
+            $sQuery .= "'{$oComment->getProduct()->getId()}','{$oComment->getUser()->getEmail(
+            )}','{$oComment->getComment()}','{$oComment->getMark()}','{$oComment->getDate()}'";
+            $sQuery .= ')';
+            return DBOperation::exec($sQuery);
+        }
+    }
