@@ -1,0 +1,71 @@
+<?php /* @var $oCurrentOrder \ecommerce\model\Order */ ?>
+<h1>Mon compte</h1>
+
+<p>Pellentesque habitant morbi tristique senectus et netus et malesuada fames ac turpis egestas. Vestibulum
+    tortor quam, feugiat vitae, ultricies eget, tempor sit amet, ante. Donec eu libero sit amet quam egestas
+    semper. Aenean ultricies mi vitae est. Mauris placerat eleifend leo.</p>
+
+<h2>Commande en cours</h2>
+<table class="table table-striped">
+    <thead>
+    <tr>
+        <th>image</th>
+        <th>produit</th>
+        <th>prix unitaire</th>
+        <th>quantité</th>
+        <th>total</th>
+    </tr>
+    </thead>
+    <tbody>
+    <?php foreach ($oCurrentOrder->getProducts() as $oCartProduct): ?>
+        <?php /* @var $oCartProduct \ecommerce\model\CartProduct */ ?>
+        <tr>
+            <td><a href="<?= $oCartProduct->getUrl(); ?>"> <img src="<?= $oCartProduct->getImage(); ?>" alt=""
+                                                                class="img-responsive pull-left img-rounded"/></a></td>
+            <td><a href="<?= $oCartProduct->getUrl(); ?>"><?= $oCartProduct->getName(); ?></a></td>
+            <td><?= $oCartProduct->getPrice(); ?>€</td>
+            <td><?= $oCartProduct->getQuantity(); ?></td>
+            <td><?= $oCartProduct->getTotal(); ?>€</td>
+        </tr>
+    <?php endforeach; ?>
+    </tbody>
+    <tfoot>
+    <tr>
+        <td colspan="4" class="text-right">Total :
+        </td>
+        <td><?= number_format($oCurrentOrder->getTotal(), 2); ?></td>
+    </tr>
+    </tfoot>
+</table>
+
+<h2>Mes anciennes commandes</h2>
+
+<table class="table table-striped oldOrders">
+    <thead>
+    <tr>
+        <th>facture</th>
+        <th>date</th>
+        <th>total</th>
+    </tr>
+    </thead>
+    <tbody>
+    <?php foreach ($aOldOrders as $oOrder): ?>
+        <?php /* @var $oOrder \ecommerce\model\Order */ ?>
+        <tr>
+            <td><a href="#" class="toggleProducts" id="<?= $oOrder->getId(); ?>">Voir les produits</a></td>
+            <td><?= $oOrder->getDate(); ?></td>
+            <td><?= $oOrder->getTotal(); ?></td>
+        </tr>
+        <?php foreach ($oOrder->getProducts() as $oCartProduct): ?>
+            <?php /* @var $oCartProduct \ecommerce\model\CartProduct */ ?>
+            <tr style="display:none" data-product="<?= $oOrder->getId(); ?>">
+                <td><a href="<?= $oCartProduct->getUrl(); ?>"> <img src="<?= $oCartProduct->getImage(); ?>" alt=""
+                                                                    class="img-responsive pull-left img-rounded"/></a>
+                </td>
+                <td><a href="<?= $oCartProduct->getUrl(); ?>"><?= $oCartProduct->getName(); ?></a></td>
+                <td><?= $oCartProduct->getTotal(); ?></td>
+            </tr>
+        <?php endforeach; ?>
+    <?php endforeach; ?>
+    </tbody>
+</table>
