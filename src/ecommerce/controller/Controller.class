@@ -1,0 +1,224 @@
+<?php
+
+    namespace ecommerce\controller;
+
+
+    use ecommerce\model\CartProduct;
+    use ecommerce\model\Comment;
+    use ecommerce\model\dao\CartManager;
+    use ecommerce\model\dao\CategoryManager;
+    use ecommerce\model\dao\CommentManager;
+    use ecommerce\model\dao\OrderManager;
+    use ecommerce\model\dao\ProductManager;
+    use ecommerce\model\dao\UserManager;
+    use ecommerce\model\Product;
+    use ecommerce\model\User;
+
+    class Controller
+    {
+
+        public function __construct()
+        {
+            $this->exec();
+        }
+
+        private function exec()
+        {
+            $sPage = 'home';
+            if (array_key_exists('page', $_GET)) {
+                $sPage = $_GET['page'];
+            }
+            $this->addToCart();
+
+            require ROOT . 'inc/site.header.inc.php';
+
+            $sFunction = 'handle' . ucfirst($sPage);
+            // check if function exists in the current class :
+            if (method_exists($this, $sFunction)) {
+                // call the function
+                $this->$sFunction();
+            } else {
+                $this->handleHome();
+            }
+            require ROOT . 'inc/site.footer.inc.php';
+        }
+
+        private function handleHome()
+        {
+            $aCategories = CategoryManager::getAll();
+            $aProducts = ProductManager::getRandom(4);
+            require ROOT . 'src/ecommerce/view/home.php';
+        }
+
+        private function handleCategory()
+        {
+            // no id => redirect home
+            if (!array_key_exists('id', $_GET)) {
+                $this->handleHome();
+                return;
+            }
+            $iId = intval($_GET['id']);
+            $oCategory = CategoryManager::get($iId);
+
+            // category not found => redirect home
+            if (null === $oCategory) {
+                $this->handleHome();
+                return;
+            } else {
+                $aProducts = ProductManager::getAllFromCategory($oCategory, 24);
+                require ROOT . 'src/ecommerce/view/category.php';
+            }
+        }
+
+        private function handleProduct()
+        {
+            // no id => redirect home
+            if (!array_key_exists('id', $_GET)) {
+                $this->handleHome();
+                return;
+            }
+            $iId = intval($_GET['id']);
+            $oProduct = ProductManager::get($iId);
+
+            // product not found => redirect home
+            if (null === $oProduct) {
+                $this->handleHome();
+                return;
+            } else {
+                $aComments = CommentManager::getAllFromProduct($oProduct);
+                $aSimilarProducts = ProductManager::getRandom(5);
+                require ROOT . 'src/ecommerce/view/product.php';
+            }
+        }
+
+        private function performSubscription()
+        {
+            $oUser = new User();
+            $oUser->setEmail($_POST['email']);
+            $oUser->setPassword($_POST['password']);
+            $oUser->setAddress($_POST['address']);
+            $oUser->setName($_POST['name']);
+            $oUser->setFirstname($_POST['firstname']);
+
+            if (UserManager::subscribe($oUser)) {
+                echo 'Inscription ok!';
+                $_SESSION['email'] = $oUser->getEmail();
+                $this->handleHome();
+            } else {
+                $bSubscribeError = true;
+                require ROOT . 'src/ecommerce/view/login.php';
+            }
+        }
+
+        private function performConnection()
+        {
+            $oUser = new User();
+            $oUser->setEmail($_POST['email']);
+            $oUser->setPassword($_POST['password']);
+
+            if (UserManager::connect($oUser)) {
+                header('location: index.php');
+            } else {
+                $bConnectError = true;
+                require ROOT . 'src/ecommerce/view/login.php';
+            }
+        }
+
+        private function handleLogout()
+        {
+            UserManager::logout(UserManager::getCurrent());
+            header('location: index.php');
+        }
+
+        private function handleLogin()
+        {
+            if (array_key_exists('subscribe', $_POST)) {
+                $this->performSubscription();
+            } elseif (array_key_exists('connect', $_POST)) {
+                $this->performConnection();
+            } else {
+                $bConnectError = false;
+                $bSubscribeError = false;
+                require ROOT . 'src/ecommerce/view/login.php';
+            }
+        }
+
+        private function handleCart()
+        {
+            if (array_key_exists('remove', $_POST)) {
+                $oCartProduct = new CartProduct();
+                $oCartProduct->setId(intval($_POST['product']));
+                CartManager::remove($oCartProduct);
+            } elseif (array_key_exists('edit', $_POST)) {
+                $oCartProduct = new CartProduct();
+                $oCartProduct->setId(intval($_POST['product']));
+                $oCartProduct->setQuantity(intval($_POST['quantity']));
+                CartManager::update($oCartProduct);
+            }
+
+            $aCart = CartManager::getAll();
+            $fTotal = number_format(CartManager::getTotal(), 2);
+            require ROOT . 'src/ecommerce/view/cart.php';
+        }
+
+        private function handleAccount()
+        {
+            $oCurrentOrder = OrderManager::getCurrent(UserManager::getCurrent());
+            $aOldOrders = OrderManager::getAll(UserManager::getCurrent());
+            require ROOT . 'src/ecommerce/view/account.php';
+        }
+
+        private function handlePopulate()
+        {
+            if (array_key_exists('addProduct', $_POST)) {
+                $oProduct = new Product();
+                $oProduct->setName($_POST['name']);
+                $oProduct->setPrice($_POST['price']);
+                $oProduct->setDescription($_POST['description']);
+                foreach ($_POST['categories'] as $iCategoryId) {
+                    $oProduct->addCategory(CategoryManager::get($iCategoryId));
+                }
+                $bCreateSuccess = ProductManager::create($oProduct);
+            }
+            if (array_key_exists('addComments', $_POST)) {
+                $oProduct = ProductManager::get($_POST['product']);
+                foreach ($_POST['users'] as $oUserEmail) {
+                    $oUser = new User();
+                    $oUser->setEmail($oUserEmail);
+                    $oUser = UserManager::get($oUser);
+                    $oComment = new Comment();
+                    $oComment->setDate(date('Y-m-d H:i:s'));
+                    $oComment->setMark(rand(0, 5));
+                    $oComment->setComment(
+                        'Lorem ipsum dolor sit amet, consectetur adipiscing elit. Integer suscipit justo massa, sit amet suscipit felis pharetra vel. Duis non tristique velit, quis sodales mauris. Mauris auctor rutrum elit, ac rutrum elit consequat consequat. Aenean laoreet id odio ut imperdiet. Sed interdum purus non velit rutrum venenatis. Etiam congue adipiscing magna sed posuere. Suspendisse cursus massa eget eros mollis, nec posuere nisi tincidunt. Maecenas porttitor enim sed massa feugiat suscipit. Pellentesque habitant morbi tristique senectus et netus et malesuada fames ac turpis egestas. Ut quis dui dolor.'
+                    );
+                    $oComment->setProduct($oProduct);
+                    $oComment->setUser($oUser);
+
+                    CommentManager::create($oComment);
+                }
+            }
+            require ROOT . 'src/ecommerce/view/populate.php';
+        }
+
+        public function handleSubmitOrder()
+        {
+            $bSuccess = CartManager::save(CartManager::getAll(), UserManager::getCurrent());
+
+            if ($bSuccess) {
+                CartManager::clean();
+            }
+            $this->handleHome();
+        }
+
+        private function addToCart()
+        {
+            if (array_key_exists('addToCart', $_POST)) {
+                $oCartProduct = new CartProduct();
+                $oCartProduct->setId(intval($_POST['product']));
+                $oCartProduct->setQuantity(intval($_POST['quantity']));
+                CartManager::add($oCartProduct);
+            }
+        }
+
+    }
