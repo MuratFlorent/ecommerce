@@ -1,0 +1,23 @@
+.container > footer {
+    margin-top: 50px;
+}
+
+.home .content .product img {
+    margin: 10px;
+}
+
+.home .products .product img {
+    width: 200px;
+}
+
+.product .content > img {
+    max-height: 400px;
+}
+
+.cart .content table img {
+    max-height: 100px;
+}
+
+.account .content table img {
+    max-height: 100px;
+}
